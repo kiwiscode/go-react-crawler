@@ -45,13 +45,9 @@ func main() {
         })
     })
 
-	routes.RegisterAnalyzeRoutes(r)
+	routes.AuthRoutes(r)
 	routes.ProfileRoutes(r)
-	routes.RegisterRoutes(r)
-	routes.LoginRoutes(r)
-
+	routes.AnalyzeRoutes(r)
 	
-
-
 	r.Run() 
 }

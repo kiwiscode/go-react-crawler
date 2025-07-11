@@ -13,12 +13,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func RegisterRoutes(r *gin.Engine) {
+
+func AuthRoutes(r *gin.Engine) {
 	r.POST("/register", registerHandler)
-}
-func LoginRoutes(r *gin.Engine) {
 	r.POST("/login", loginHandler)
 }
+
+
 
 
 func registerHandler(c *gin.Context) {

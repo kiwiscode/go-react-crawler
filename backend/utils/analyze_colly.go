@@ -3,6 +3,7 @@ package utils
 // ### ISSUE / IMPORTANT with Colly and React SPA pages
 // When using Colly to scrape pages served by React (or other client-side rendered frameworks), the scraper receives only the initial static HTML served by the server, which typically does not include the dynamically rendered content such as `<h1>`, `<h2>`, or page titles that React generates on the client side.
 import (
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -11,13 +12,21 @@ import (
 )
 
 // Return type: a struct containing all analysis results
+
+type LinkDetail struct {
+    URL        string `json:"url"`
+    Text       string `json:"text,omitempty"`
+}
 type AnalysisResult struct {
 	HTMLVersion       string         `json:"html_version"`
 	Title             string         `json:"title"`
 	HeadingCounts     map[string]int `json:"heading_counts"`
-	InternalLinks     int            `json:"internal_links"`
-	ExternalLinks     int            `json:"external_links"`
-	InaccessibleLinks int            `json:"inaccessible_links"`
+	InternalLinksCount int 			 `json:"internal_links_count"`	 
+	ExternalLinksCount int 			 `json:"external_links_count"`
+	InaccessibleLinksCount int 		 `json:"inaccessible_links_count"`
+	InternalLinks     []LinkDetail   `json:"internal_links"`
+	ExternalLinks     []LinkDetail   `json:"external_links"`
+	InaccessibleLinks []LinkDetail       `json:"inaccessible_links"`
 	HasLoginForm      bool           `json:"has_login_form"`
 }
 
@@ -63,14 +72,33 @@ func AnalyzeURL(targetURL string) (*AnalysisResult, error) {
 		href := e.Attr("href")
 		link, err := url.Parse(href)
 		if err != nil {
-			result.InaccessibleLinks++
+			result.InaccessibleLinksCount++
+			result.InaccessibleLinks = append(result.InaccessibleLinks, LinkDetail{
+			URL:  href,
+			Text: e.Text,
+		})
 			return
 		}
 
+		fullURL := link.String()
+		if !link.IsAbs() {
+		fullURL = e.Request.AbsoluteURL(href)
+		}
+
+		linkDetail := LinkDetail{
+		URL:  fullURL,
+		Text: e.Text,
+		}
+
+		fmt.Printf("href: %s\n", fullURL, )
+		
 		if link.Host == "" || strings.Contains(link.Host, domain) {
-			result.InternalLinks++
+			result.InternalLinksCount++
+			result.InternalLinks = append(result.InternalLinks, linkDetail)
 		} else {
-			result.ExternalLinks++
+			result.ExternalLinksCount++
+					result.ExternalLinks = append(result.ExternalLinks, linkDetail)
+
 		}
 	})
 
