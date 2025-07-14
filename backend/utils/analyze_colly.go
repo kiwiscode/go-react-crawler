@@ -1,9 +1,8 @@
 package utils
 
-// ### ISSUE / IMPORTANT with Colly and React SPA pages
+// ### with Colly and React SPA pages
 // When using Colly to scrape pages served by React (or other client-side rendered frameworks), the scraper receives only the initial static HTML served by the server, which typically does not include the dynamically rendered content such as `<h1>`, `<h2>`, or page titles that React generates on the client side.
 import (
-	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -11,12 +10,13 @@ import (
 	"github.com/gocolly/colly"
 )
 
-// Return type: a struct containing all analysis results
-
+// link detail type structure
 type LinkDetail struct {
     URL        string `json:"url"`
     Text       string `json:"text,omitempty"`
 }
+
+// Analysis result type structure
 type AnalysisResult struct {
 	HTMLVersion       string         `json:"html_version"`
 	Title             string         `json:"title"`
@@ -90,7 +90,6 @@ func AnalyzeURL(targetURL string) (*AnalysisResult, error) {
 		Text: e.Text,
 		}
 
-		fmt.Printf("href: %s\n", fullURL, )
 		
 		if link.Host == "" || strings.Contains(link.Host, domain) {
 			result.InternalLinksCount++
@@ -108,6 +107,7 @@ func AnalyzeURL(targetURL string) (*AnalysisResult, error) {
 			result.HasLoginForm = true
 		}
 	})
+
 
 	err := c.Visit(targetURL)
 	if err != nil {

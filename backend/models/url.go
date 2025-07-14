@@ -12,6 +12,7 @@ type URL struct {
     UserID               int                 `db:"user_id" json:"user_id"`
     URL                  string              `db:"url" json:"url"`
     Status               string              `db:"status" json:"status"` // queued, running, done/error
+    ShouldPause          bool                `db:"should_pause" json:"should_pause"`
     Title                string              `db:"title" json:"title"`
     HTMLVersion          string              `db:"html_version" json:"html_version"`
     HeadingCounts        map[string]int      `db:"heading_counts" json:"heading_counts"` 
