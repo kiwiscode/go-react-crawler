@@ -660,6 +660,9 @@ const Table: React.FC<TableProps> = ({
 
   // This function is used to analyze multiple URLs or just one URL, but regardless of the length, it always sends the URLs inside an array
   const startBulkAnalysis = async (urls: string[]) => {
+    setToSendURLs([]);
+    setCheckedItemsByPage([]);
+    setSelectAll(false);
     try {
       const res = await fetchData({
         url: `${API_URL}/analyses/create`,
@@ -746,10 +749,12 @@ const Table: React.FC<TableProps> = ({
     } catch (error: any) {
       console.error("error:", error);
       setToSendURLs([]);
-    } finally {
-      setToSendURLs([]);
+      setCheckedItemsByPage([]);
+      setSelectAll(false);
     }
   };
+
+  console.log("selected send urls:", sendURLs);
 
   return (
     <>
