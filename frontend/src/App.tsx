@@ -25,7 +25,7 @@ function App() {
       />
       <Route
         // Set the details page path with ':id' as a param to use useParams
-        path="/details/:id"
+        path="/analyses/:id"
         element={
           // Protect details page with a ProtectedRoute component that only allows access to active authenticated users
           <ProtectedRoute>

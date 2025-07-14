@@ -11,7 +11,7 @@ export function usePageTitle(baseTitle: string) {
     // Automatically change the document title based on the pathname
     let path = location.pathname === "/" ? "" : location.pathname;
 
-    if (path.startsWith("/details")) {
+    if (path.startsWith("/analyses")) {
       path = " / Details";
     } else if (path === "/dashboard") {
       path = " / Dashboard";

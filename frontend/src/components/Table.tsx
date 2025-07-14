@@ -1179,22 +1179,16 @@ const Table: React.FC<TableProps> = ({
                       created_at,
                       updated_at,
                     }) => {
-                      // const redirectURL = `/../${"asda"}/${
-                      //   status === "queued"
-                      //     ? "queued"
-                      //     : status === "running"
-                      //     ? "running"
-                      //     : status === "done"
-                      //     ? "done"
-                      //     : status === "error"
-                      //     ? "error"
-                      //     : ""
-                      // }/${id}`;
+                      const detailUrl = `/analyses/${id}`;
 
                       return (
                         <tr
                           onClick={() =>
-                            window.open(url, "_blank", "noopener,noreferrer")
+                            window.open(
+                              detailUrl,
+                              "_blank",
+                              "noopener,noreferrer"
+                            )
                           }
                           key={id}
                           className={`${
@@ -1225,7 +1219,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className="px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
@@ -1235,7 +1229,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className="px-[12px] py-[6px] whitespace-nowrap">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left overflow-hidden whitespace-nowrap overflow-ellipsis max-w-[500px]"
@@ -1254,7 +1248,6 @@ const Table: React.FC<TableProps> = ({
                                   toggleShouldPause(id);
                                 }
                               }}
-                              // href={url}
                               target="_blank"
                               rel="noopener noreferrer"
                               className={`w-full h-full text-left flex items-center gap-3 cursor-pointer
@@ -1294,7 +1287,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className=" px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
@@ -1304,7 +1297,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className=" px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
@@ -1314,7 +1307,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className=" px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
@@ -1324,7 +1317,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className=" px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
@@ -1334,7 +1327,7 @@ const Table: React.FC<TableProps> = ({
                           </td>
                           <td className=" px-[12px] py-[6px]">
                             <a
-                              href={url}
+                              href={detailUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
