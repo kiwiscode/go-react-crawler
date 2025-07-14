@@ -32,6 +32,7 @@ type BulkUrlReq struct {
 func AnalyzeRoutes(r *gin.Engine) {
     // Route declarations
     r.POST("/analyses/create",auth.JWTAuthMiddleware(), createAnalyses)
+    r.GET("/analyses/:id", auth.JWTAuthMiddleware(), getAnalysisDetailHandler)
     r.DELETE("/analyses/:id", auth.JWTAuthMiddleware(), deleteAnalysisByIDHandler)
     r.POST("/analyses/queued",auth.JWTAuthMiddleware(), setAnalysisQueuedHandler)
     r.POST("/analyses/running",auth.JWTAuthMiddleware(), runningAnalysisHandler)
@@ -243,6 +244,97 @@ func createAnalyses (c *gin.Context){
 
 }
 
+// A route to get details of a specific analysis by ID  /analyses/:id
+func getAnalysisDetailHandler(c *gin.Context) {
+    // Get the "id" parameter from the URL
+    idParam := c.Param("id")
+    if idParam == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "ID parameter is required"})
+        return
+    }
+
+    // Convert idParam from string to integer
+    id, err := strconv.Atoi(idParam)
+    if err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID parameter"})
+        return
+    }
+
+    // Get the userID from the Gin context
+    userIDVal, _ := c.Get("userID")
+    userIDFloat, ok := userIDVal.(float64)
+    if !ok {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid userID"})
+        return
+    }
+    userID := int(userIDFloat)
+
+    // Query to get the URL details by ID and userID
+    query := `
+        SELECT 
+            id, user_id, url, status, should_pause, title, html_version, heading_counts, 
+            internal_links_count, external_links_count, has_login_form, inaccessible_links_count, 
+            inaccessible_links, internal_links, external_links, created_at
+        FROM urls 
+        WHERE id = ? AND user_id = ?
+    `
+
+    var url models.URL
+
+    row := db.DB.QueryRow(query, id, userID)
+    var headingCountsJSON, inaccessibleLinksJSON, internalLinksJSON, externalLinksJSON []byte
+
+    err = row.Scan(
+        &url.ID,
+        &url.UserID,
+        &url.URL,
+        &url.Status,
+        &url.ShouldPause,
+        &url.Title,
+        &url.HTMLVersion,
+        &headingCountsJSON,
+        &url.InternalLinksCount,
+        &url.ExternalLinksCount,
+        &url.HasLoginForm,
+        &url.InaccessibleLinksCount,
+        &inaccessibleLinksJSON,
+        &internalLinksJSON,
+        &externalLinksJSON,
+        &url.CreatedAt,
+    )
+
+    if err != nil {
+        if err == sql.ErrNoRows {
+            c.JSON(http.StatusNotFound, gin.H{"error": "Analysis not found"})
+            return
+        }
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    // Unmarshal JSON fields into Go structs
+    if err := json.Unmarshal(headingCountsJSON, &url.HeadingCounts); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse heading counts"})
+        return
+    }
+    if err := json.Unmarshal(inaccessibleLinksJSON, &url.InaccessibleLinks); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse inaccessible links"})
+        return
+    }
+    if err := json.Unmarshal(internalLinksJSON, &url.InternalLinks); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse internal links"})
+        return
+    }
+    if err := json.Unmarshal(externalLinksJSON, &url.ExternalLinks); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse external links"})
+        return
+    }
+
+    // Return the URL analysis details as JSON
+    c.JSON(http.StatusOK, gin.H{
+        "data": url,
+    })
+}
 
 // The route required to delete a specific analysis /analyses/:id
 func deleteAnalysisByIDHandler(c *gin.Context) {
