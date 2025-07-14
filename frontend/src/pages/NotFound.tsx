@@ -1,6 +1,8 @@
 import { useEffect, useState, type JSX } from "react";
+// Since the stars don't have unique IDs, use the UUID package to generate uuidv4 unique IDs in the map
 import { v4 as uuidv4 } from "uuid";
 
+// Define the shape structure of the Star object.
 interface Star {
   id: number;
   size: number;
@@ -11,6 +13,7 @@ interface Star {
   direction: "topLeft" | "topRight";
 }
 
+// Generate an array of 'count' Star objects with random properties
 const generateStars = (count: number): Star[] => {
   return Array.from({ length: count }, (_, i) => ({
     id: i,
@@ -27,14 +30,17 @@ function NotFound(): JSX.Element {
   const [stars, setStars] = useState<Star[]>([]);
 
   useEffect(() => {
+    // Reflect the 'not-found' visit in localStorage
     localStorage.setItem("not-found", "true");
-
+    // Generate 30 stars
     setStars(generateStars(30));
-
+    // Every 4 seconds, update stars:
+    // Set up an interval for continuous checking
     const interval = setInterval(() => {
       setStars((prev) => [...prev.slice(-20), ...generateStars(10)]);
     }, 4000);
 
+    // Clear interval on component unmount to avoid memory leaks
     return () => clearInterval(interval);
   }, []);
 
