@@ -63,18 +63,6 @@ import { formatDateEU } from "../utils/dateFormatter";
 import StatusBadge from "./StatusBadge";
 import { PopoverClose } from "@radix-ui/react-popover";
 
-// UrlStatus defines the possible states of a URL process
-type UrlStatus = "queued" | "running" | "done" | "error";
-
-// Table selected url data type definition
-
-interface SelectedUrl {
-  id: number;
-  url: string;
-  status: UrlStatus;
-  should_pause: boolean;
-}
-
 // TableProps defines the required props for the Table component
 // - urls: the list of URL data to be displayed : export interface => UrlData {
 //   id: number;
@@ -106,7 +94,6 @@ interface SelectedUrl {
 
 interface TableProps {
   urls: UrlData[];
-  selectedUrls: SelectedUrl[];
   fetchProfile: () => void;
   giveTogglePayload: (
     payload: Partial<{
@@ -124,7 +111,6 @@ type SortOrder = "asc" | "desc";
 
 const Table: React.FC<TableProps> = ({
   urls,
-  selectedUrls,
   fetchProfile,
   giveTogglePayload,
 }) => {
