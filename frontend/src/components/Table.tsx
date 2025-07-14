@@ -1163,7 +1163,9 @@ const Table: React.FC<TableProps> = ({
                       borderBottom: "1px solid rgba(0,0,0,0.1)",
                     }}
                   >
-                    <td className="px-[12px] py-[6px]">No data found</td>
+                    <td className="px-[12px] py-[6px] text-center" colSpan={10}>
+                      No data found
+                    </td>
                   </tr>
                 ) : (
                   sortedData?.map(
