@@ -7,9 +7,9 @@ import (
 
 	"github.com/gin-contrib/cors" // CORS middleware
 	"github.com/gin-gonic/gin"
-	"github.com/kiwiscode/sykell-tech-challenge/db"
-	auth "github.com/kiwiscode/sykell-tech-challenge/middleware"
-	"github.com/kiwiscode/sykell-tech-challenge/routes"
+	"github.com/kiwiscode/go-react-crawler/db"
+	auth "github.com/kiwiscode/go-react-crawler/middleware"
+	"github.com/kiwiscode/go-react-crawler/routes"
 )
 
 func main() {

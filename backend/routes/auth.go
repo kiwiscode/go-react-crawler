@@ -11,7 +11,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	// Import token for token-based authentication
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/kiwiscode/sykell-tech-challenge/db"
+	"github.com/kiwiscode/go-react-crawler/db"
 
 	"github.com/gin-gonic/gin"
 	// Import bcrypt to hash the password

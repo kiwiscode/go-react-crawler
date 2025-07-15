@@ -1,4 +1,4 @@
-module github.com/kiwiscode/sykell-tech-challenge
+module github.com/kiwiscode/go-react-crawler
 
 go 1.24.0
 
