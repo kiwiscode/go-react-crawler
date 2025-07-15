@@ -135,7 +135,7 @@ const Details: React.FC = () => {
         </div>
 
         {/* Analysis Details */}
-        <h1>Details View for Analysis #{analysis.id}</h1>
+        <h1 className="text-[2em]">Details View for Analysis #{analysis.id}</h1>
         <p>
           <strong>URL:</strong> {analysis.url}
         </p>
@@ -230,7 +230,7 @@ const Details: React.FC = () => {
               </span>
             </div>
             <ul className="max-h-48 overflow-auto border rounded-md p-2 bg-white dark:bg-[#111]">
-              {paginate(analysis.external_links, externalPage).map(
+              {paginate(analysis.external_links, externalPage)?.map(
                 (link, i) => (
                   <li
                     key={i}
