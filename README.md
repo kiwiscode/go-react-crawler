@@ -106,6 +106,10 @@ _If you want to run it manually in a development environment, follow the steps b
 
 The video below demonstrates how to use the app step-by-step. It’s designed to help you quickly understand the main features and workflow.
 
+
+https://github.com/user-attachments/assets/40c608d5-f1ae-49f8-9d55-944decd421ee
+
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->
