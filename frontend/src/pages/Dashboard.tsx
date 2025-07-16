@@ -5,7 +5,7 @@ import useAxios from "../hooks/useAxios";
 import { API_URL } from "../constants/env";
 import LoadingSpinner from "../components/LoadingSpinner";
 import Table from "../components/Table";
-import { Pause, Play, Trash2, X } from "lucide-react";
+import { Pause, Play, RefreshCcw, Trash2, X } from "lucide-react";
 import type { UrlData } from "../types/urlData";
 import StatusBadge from "../components/StatusBadge";
 import { Input } from "../components/ui/input";
@@ -58,6 +58,9 @@ const Dashboard = () => {
 
   const [errorMessage, setErrorMessage] = useState<string>("");
 
+  // To prevent the toggle state from being manipulated by the user
+  const [isToggling, setIsToggling] = useState<boolean>(false);
+
   // A regex to validate whether a website input is in the correct format.
   const webSiteRegex =
     /^(https?:\/\/)([\w\-]+\.)+[\w\-]{2,}(\/[\w\-._~:/?#[\]@!$&'()*+,;=]*)?$/;
@@ -88,7 +91,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Show seedData only once on first mount
-    if (selectedUrls.length === 0) {
+    if (
+      selectedUrls.length === 0 &&
+      (localStorage.getItem("showSeed") === "true" || urls.length === 0)
+    ) {
       setSelectedUrls(seedData);
     }
   }, []);
@@ -142,6 +148,8 @@ const Dashboard = () => {
     setAnalyzeLoading(true);
     setErrorMessage("");
     setAddUrlError("");
+
+    let failedURLs: string[] = [];
     try {
       // create urls
       const res = await fetchData({
@@ -159,17 +167,21 @@ const Dashboard = () => {
 
       // If data exists, use it; otherwise, use an empty array to prevent errors in map functions
       const created = res.data || [];
+      const exist = res.existURLs || [];
       const failed = res.failedURLs || [];
 
       // Save ids
       const createdIds = created.map((item: any) => item.id);
-      const failedIds = failed.map((item: any) => item.id);
+      const existIds = exist.map((item: any) => item.id);
+
+      // Save failed urls
+      failedURLs = failed.map((item: any) => item.url);
 
       // Spread into one array all ids
-      const ids = [...createdIds, ...failedIds];
+      const ids = [...createdIds, ...existIds];
 
       // Spread the elements to a single variable
-      const combined = [...created, ...failed];
+      const combined = [...created, ...exist];
 
       // Update the selected URLs displayed in the UI
       setSelectedUrls(combined);
@@ -229,6 +241,7 @@ const Dashboard = () => {
           method: "POST",
           data: {
             ids: ids,
+            failedURLs: failedURLs,
           },
           headers: {
             // Pass the token in the headers
@@ -254,6 +267,7 @@ const Dashboard = () => {
         // Refresh the profile to get the latest information
         fetchProfile();
 
+        localStorage.setItem("showSeed", JSON.stringify(false));
         // UI Elements update
         setErrorMessage("");
         setAnalyzeLoading(false);
@@ -280,6 +294,9 @@ const Dashboard = () => {
 
   // To stop or start URLs that are currently in the running state
   const toggleShouldPause = async (id: number) => {
+    // To prevent the toggle state from being manipulated by the user
+    if (isToggling) return;
+    setIsToggling(true);
     try {
       // State changes and error resets for UI improvements
       setAnalyzeLoading(false);
@@ -362,6 +379,14 @@ const Dashboard = () => {
             );
           }
 
+          if (status === "error") {
+            setSelectedUrls((prev) =>
+              prev.map((item) =>
+                item.url === url ? { ...item, status: "error" } : item
+              )
+            );
+          }
+
           // Fetch the active (current) profile
           fetchProfile();
 
@@ -374,6 +399,8 @@ const Dashboard = () => {
       setAnalyzeLoading(false);
 
       console.error("error:", error);
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -421,14 +448,39 @@ const Dashboard = () => {
           );
         }
 
+        if (status === "error") {
+          setSelectedUrls((prev) =>
+            prev.map((item) =>
+              item.url === url ? { ...item, status: "error" } : item
+            )
+          );
+        }
+
         fetchProfile();
       }
     }
   }, [togglePayload]);
 
+  // Receive the selected and deleted URLs from the Table child component, and if those URLs exist in the selectedUrls list, remove them from both selectedUrls and sendUrls
+  const getDeletedURLs = (data: string[]) => {
+    if (data) {
+      console.log("data received:", data);
+
+      setToSendURLs((prev) =>
+        prev.filter((url: string) => !data.includes(url))
+      );
+      setSelectedUrls((prev) =>
+        prev.filter((item: SelectedUrl) => !data.includes(item.url))
+      );
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  console.log("selected urls:", selectedUrls);
+  console.log("to send urls:", sendURLs);
 
   if (profileLoading)
     return (
@@ -523,23 +575,18 @@ const Dashboard = () => {
                     <span className="w-1/2 text-sm break-all truncate">
                       {u.url}
                     </span>
-                    <div className="w-1/4 flex items-center gap-3 justify-center">
+                    <div className="w-1/4 flex items-center gap-3 justify-center ">
                       <button
                         onClick={() => {
-                          if (
-                            u.status === "running" ||
-                            (u.status === "queued" && u.should_pause)
-                          ) {
+                          if (u.status !== "done") {
                             toggleShouldPause(u.id);
                           }
                         }}
                         className={`flex gap-3 items-center ${
-                          (u.status === "running" ||
-                            (u.status === "queued" && u.should_pause)) &&
-                          "cursor-pointer"
+                          u.status === "done" && "cursor-default"
                         }`}
                       >
-                        {u.should_pause ? (
+                        {u.should_pause && u.status !== "error" ? (
                           <>
                             <div className="flex items-center gap-1 text-xs px-2 py-[2px] bg-yellow-100 text-yellow-700 rounded-full">
                               <Pause className="w-3.5 h-3.5" />
@@ -551,15 +598,19 @@ const Dashboard = () => {
                           <>
                             <StatusBadge status={u.status} />
                             <>
-                              <Pause
-                                size={16}
-                                color="#f5a623"
-                                className={`${
-                                  u.status !== "queued" && u.status !== "done"
-                                    ? ""
-                                    : "hidden"
-                                }`}
-                              />
+                              {u.status === "error" ? (
+                                <RefreshCcw size={16} color="#008236" />
+                              ) : (
+                                <Pause
+                                  size={16}
+                                  color="#f5a623"
+                                  className={`${
+                                    u.status !== "queued" && u.status !== "done"
+                                      ? ""
+                                      : "hidden"
+                                  }`}
+                                />
+                              )}
                             </>
                           </>
                         )}
@@ -600,6 +651,7 @@ const Dashboard = () => {
         ) : null}
 
         <Table
+          refreshDashboardStatus={getDeletedURLs}
           urls={urls}
           fetchProfile={fetchProfile}
           giveTogglePayload={giveTogglePayload}
