@@ -28,6 +28,8 @@ type AnalysisResult struct {
 	ExternalLinks     []LinkDetail   `json:"external_links"`
 	InaccessibleLinks []LinkDetail       `json:"inaccessible_links"`
 	HasLoginForm      bool           `json:"has_login_form"`
+	ErrorURL          string         `json:"error_url,omitempty"`
+
 }
 
 func AnalyzeURL(targetURL string) (*AnalysisResult, error) {
@@ -108,11 +110,14 @@ func AnalyzeURL(targetURL string) (*AnalysisResult, error) {
 		}
 	})
 
+	// Set error handler
+	c.OnError(func(r *colly.Response, err error) {
+		result.ErrorURL = r.Request.URL.String()
+	})
 
-	err := c.Visit(targetURL)
-	if err != nil {
-		return nil, err
-	}
+
+	c.Visit(targetURL)
+	
 
 	return result, nil
 }

@@ -26,7 +26,8 @@ type Urls struct {
 }
 
 type BulkUrlReq struct {
-	IDs []int `json:"ids"`
+	IDs        []int    `json:"ids"`
+	FailedURLs []string `json:"failedURLs"`
 }
 
 func AnalyzeRoutes(r *gin.Engine) {
@@ -50,9 +51,9 @@ func extractURLFromError(err error) string {
 	return ""
 }
 
-// Another helper function that checks within a loop whether the active URL is in the failedURLs list
-func urlInFailedURLs(failedURLs []gin.H, url string) bool {
-	for _, f := range failedURLs {
+// Another helper function that checks within a loop whether the active URL is in the existURLs list
+func urlInExistURLs(existURLs []gin.H, url string) bool {
+	for _, f := range existURLs {
 		if f["url"] == url {
 			return true
 		}
@@ -91,7 +92,10 @@ func createAnalyses(c *gin.Context) {
 
 	// The created URLs will be stored in a createdURLs variable, so a variable was created for this purpose
 	var createdURLs []gin.H
-	// The URLs transitioning from queued → running → done/error sometimes cause this route to restart, and since URLs already saved in the database don’t need to be created again, they should be tracked inside failed URLs
+	// The URLs transitioning from queued → running → done/error sometimes cause this route to restart, and since URLs already saved in the database don’t need to be created again, they should be tracked inside exist URLs
+	var existURLs []gin.H
+
+	// Some URLs get caught by OnError from analyze_colly.go utils, and we need to store these URLs so that we can use them in the /result route. We are initializing this array here
 	var failedURLs []gin.H
 
 	// A loop is created over the id array received from the request body
@@ -110,21 +114,33 @@ func createAnalyses(c *gin.Context) {
 				return
 			}
 		} else {
-			// URL already exists for this user, add it to failedURLs list to avoid duplicate processing
-			failedURLs = append(failedURLs, gin.H{
+			// URL already exists for this user, add it to existURLs list to avoid duplicate processing
+			existURLs = append(existURLs, gin.H{
 				"id":           existingID,
 				"url":          url,
 				"status":       "queued",
 				"should_pause": false,
 			})
-			// Skip to the next URL in the loop
-			continue
 		}
+
 
 		// Pass the active URL to the analyzeURL function from utils and perform HTML analysis.
 		result, err := utils.AnalyzeURL(url)
+
+		// If analysis failed for this URL
+		if result.ErrorURL == url {
+			// Then append to failedURLs
+			failedURLs = append(failedURLs, gin.H{
+				"url":          result.ErrorURL,
+				"status":       "queued",
+				"should_pause": false,
+			})
+
+			fmt.Printf("result from analyze url for ErrorURL: %+v\n", result.ErrorURL)
+		}
+
 		if err != nil {
-			// If there is a problem with the URL, use the utils function created on line 45. This function helps to better understand the error
+			// If there is a problem with the analysis, use the utils function created on line 45. This function helps to better understand the error
 			problematicURL := extractURLFromError(err)
 			if problematicURL == "" {
 				problematicURL = "unknown"
@@ -132,14 +148,14 @@ func createAnalyses(c *gin.Context) {
 
 			// Send the problem to the user
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": fmt.Sprintf("Could not process URL: %s", problematicURL),
+				"error": fmt.Sprintf("Could not process URL: %s", err),
 			})
 			// and stop the loop here
 			return
 		}
 
-		// Proceed only if the URL is not in the failed URLs list
-		if !urlInFailedURLs(failedURLs, url) {
+		// Proceed only if the URL is not in the exist URLs list
+		if !urlInExistURLs(existURLs, url) {
 
 			// Create a new URL record
 			newURL := models.URL{
@@ -214,10 +230,11 @@ func createAnalyses(c *gin.Context) {
 
 	}
 
-	// Respond with success, sending created and failed URLs to the client
+	// Respond with success, sending created, exist URLs and failed URLs to the client
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Created URLs ",
 		"data":       createdURLs,
+		"existURLs":  existURLs,
 		"failedURLs": failedURLs,
 	})
 
@@ -488,7 +505,7 @@ func setAnalysisQueuedHandler(c *gin.Context) {
 
 }
 
-// The route for changing the status of analysis or analyses from queued to running after being queued
+// The route for changing the status of analysis or analyses from queued to running after being queued /analyses/running
 func runningAnalysisHandler(c *gin.Context) {
 	// Set the req variable as type BulkUrlReq
 	var req BulkUrlReq
@@ -533,6 +550,7 @@ func runningAnalysisHandler(c *gin.Context) {
 			continue
 		}
 
+
 		// Check if URL with given id exists and get its owner user_id
 		if ownerID != userID {
 			c.JSON(http.StatusForbidden, gin.H{"error": "You are not authorized to update this URL"})
@@ -558,7 +576,7 @@ func runningAnalysisHandler(c *gin.Context) {
             UPDATE urls
             SET 
                 status = ?, 
-                should_pause = ?,
+               
                 title = ?, 
                 html_version = ?, 
                 heading_counts = ?, 
@@ -572,7 +590,7 @@ func runningAnalysisHandler(c *gin.Context) {
                 updated_at = ?
             WHERE id = ?`,
 			"running",
-			false,
+			
 			result.Title,
 			result.HTMLVersion,
 			headingCountsJSON,
@@ -610,7 +628,7 @@ func runningAnalysisHandler(c *gin.Context) {
 
 }
 
-// This route is set up as the final step in the queued → running → done/error chain, used to return 'done' or 'error' after the URL analysis /analyses/running
+// This route is set up as the final step in the queued → running → done/error chain, used to return 'done' or 'error' after the URL analysis /analyses/result
 func saveAnalysisResultHandler(c *gin.Context) {
 	// Set the req variable as type BulkUrlReq
 	var req BulkUrlReq
@@ -682,6 +700,24 @@ func saveAnalysisResultHandler(c *gin.Context) {
 		if shouldPause {
 			status = "queued"
 		}
+
+		// Check if checkURL exists inside req.FailedURLs
+		failedURL := false
+		for _, item := range req.FailedURLs {
+			if item == url {
+				// if yes, set the failedURL field to true
+				failedURL = true
+				break
+			}
+		}
+
+		if failedURL || result.ErrorURL == url && !shouldPause {
+			// and change the status to error
+			status = "error"
+			shouldPause = true
+		}
+
+
 
 		// Execute the update query, including JSON fields
 		_, err = db.DB.Exec(`
