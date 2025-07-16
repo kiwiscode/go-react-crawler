@@ -705,8 +705,6 @@ const Table: React.FC<TableProps> = ({
 
         // To update the profile and receive the changes
         fetchProfile();
-
-        "data after adding to queues:", res.data;
       }, 300);
 
       setTimeout(async () => {
