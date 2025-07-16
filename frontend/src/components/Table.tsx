@@ -1433,24 +1433,28 @@ const Table: React.FC<TableProps> = ({
         </div>
 
         {/* Pagination Controls */}
-        <div className="flex items-center justify-between px-2 mt-[10px]">
-          <div>
+        <div className="flex flex-col md:flex-row items-center justify-between mt-[10px] gap-y-4 md:gap-y-0">
+          <div className="flex flex-col md:flex-row items-center md:space-x-3 w-full md:w-auto justify-center md:justify-start gap-2">
             {Object.values(currentCheckedItems).some((val) => val) && (
-              <Button onClick={() => startBulkAnalysis([])} variant={"default"}>
-                Re-run Selected URLs
-              </Button>
-            )}
-            {Object.values(currentCheckedItems).some((val) => val) && (
-              <Button
-                className="ml-[12px]"
-                variant={"default"}
-                onClick={deleteSelected}
-              >
-                Delete Selected URLs
-              </Button>
+              <>
+                <Button
+                  onClick={() => startBulkAnalysis([])}
+                  variant={"default"}
+                >
+                  Re-run Selected URLs
+                </Button>
+                <Button
+                  className="md:ml-[12px]"
+                  variant={"default"}
+                  onClick={deleteSelected}
+                >
+                  Delete Selected URLs
+                </Button>
+              </>
             )}
           </div>
-          <div className="flex items-center gap-x-6 lg:gap-x-8">
+
+          <div className="flex flex-col md:flex-row items-center gap-y-3 md:gap-y-0 md:gap-x-6 lg:gap-x-8 w-full md:w-auto justify-center md:justify-end">
             <div className="flex items-center gap-x-2">
               <p>
                 <span className="text-[14px] font-medium">Rows per page</span>
@@ -1473,11 +1477,13 @@ const Table: React.FC<TableProps> = ({
                 </SelectContent>
               </Select>
             </div>
+
             <div className="flex w-[100px] items-center justify-center font-medium">
               <span className="text-[14px]">
                 Page {currentPage} of {totalPages || 1}
               </span>
             </div>
+
             <div className="flex items-center gap-x-2">
               <Button
                 variant="outline"
