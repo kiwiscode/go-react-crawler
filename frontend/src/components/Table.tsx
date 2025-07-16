@@ -104,6 +104,7 @@ interface TableProps {
       status: string;
     }>
   ) => void;
+  refreshDashboardStatus: (param: string[]) => void;
 }
 
 // Table SortOrder url data type definition asc or desc
@@ -113,6 +114,7 @@ const Table: React.FC<TableProps> = ({
   urls,
   fetchProfile,
   giveTogglePayload,
+  refreshDashboardStatus,
 }) => {
   const { getToken } = useAuth();
   const { fetchData } = useAxios();
@@ -137,6 +139,8 @@ const Table: React.FC<TableProps> = ({
   const [titleFilter, setTitleFilter] = useState<string>("");
   // Variable holding the filtering state for the Status column
   const [statusFilter, setStatusFilter] = useState<string>("");
+  // Variable holding the filtering state for the URL column
+  const [URLFilter, setURLFilter] = useState<string>("");
   // Variable holding the filtering state for the HTML Version column
   const [htmlVersionFilter, setHtmlVersionFilter] = useState<string>("");
 
@@ -206,6 +210,9 @@ const Table: React.FC<TableProps> = ({
 
   // A state that holds the URLs for bulk analysis, meaning multiple URL analyses
   const [sendURLs, setToSendURLs] = useState<string[]>([]);
+
+  // To prevent the toggle state from being manipulated by the user
+  const [isToggling, setIsToggling] = useState<boolean>(false);
 
   // this shallow data copy, we get the entire set of URLs — whether they’re on page 1 or page 2. Although the sorted data only shows the active page, this state covers all items in the URL list
 
@@ -312,6 +319,10 @@ const Table: React.FC<TableProps> = ({
     const matchesTitle = item.title
       ?.toLowerCase()
       .includes(titleFilter.toLowerCase());
+    // If the URL matches
+    const matchesURLVersion = item.url
+      ?.toLowerCase()
+      .includes(URLFilter.toLowerCase());
     // If the html_version matches
     const matchesHtmlVersion = item.html_version
       ?.toLowerCase()
@@ -329,7 +340,11 @@ const Table: React.FC<TableProps> = ({
       ? // return globalMatch true or false
         globalMatch
       : // Otherwise, check all of them; if all are true, return true; if any one is false, return false
-        matchesId && matchesTitle && matchesHtmlVersion && matchesStatus;
+        matchesId &&
+          matchesTitle &&
+          matchesHtmlVersion &&
+          matchesURLVersion &&
+          matchesStatus;
   });
 
   // A function to handle input changes for filtering these columns: id, title, status, html_version, internal_links_count, external_links_count, created_at, and updated_at
@@ -462,6 +477,9 @@ const Table: React.FC<TableProps> = ({
 
       // 7. Refresh the profile data to reflect the changes
       fetchProfile();
+
+      // 8. If the selected URLs are included within the Dashboard parent's selectedUrls list, pass them to the Dashboard
+      refreshDashboardStatus(sendURLs);
     } catch (error) {
       // 8. Handle any errors by logging and alerting the user
       console.error("Deletion failed:", error);
@@ -547,6 +565,9 @@ const Table: React.FC<TableProps> = ({
 
   // With this function, you can stop a running URL analysis or restart a paused URL analysis
   const toggleShouldPause = async (id: number) => {
+    // To prevent the toggle state from being manipulated by the user
+    if (isToggling) return;
+    setIsToggling(true);
     // giveTogglePayload first collects all states at the beginning
     // This prop function allows me to send the operations I perform in my table one by one to the parent component Dashboard.tsx
     giveTogglePayload({
@@ -653,6 +674,8 @@ const Table: React.FC<TableProps> = ({
       }
     } catch (error) {
       console.error("error:", error);
+    } finally {
+      setIsToggling(false);
     }
   };
 
@@ -661,6 +684,8 @@ const Table: React.FC<TableProps> = ({
     setToSendURLs([]);
     setCheckedItemsByPage([]);
     setSelectAll(false);
+
+    let failedURLs: string[] = [];
     try {
       const res = await fetchData({
         url: `${API_URL}/analyses/create`,
@@ -674,18 +699,23 @@ const Table: React.FC<TableProps> = ({
         },
       });
 
-      // The /analyses/create route returns both created and failed URLs
+      // The /analyses/create route returns both created and exist URLs
       // Created URLs include the new URLs that are being analyzed for the first time
       const created = res.data || [];
-      // Failed URLs are usually URLs that have been analyzed before, and there’s no need to analyze them again
+      // Exist URLs are usually URLs that have been analyzed before, and there’s no need to analyze them again
+      const exist = res.existURLs || [];
+      // Failed URLs are the URLs that encountered errors during the analysis
       const failed = res.failedURLs || [];
 
-      // I’m setting both the new IDs of the created URLs and the IDs of the failed URLs from the created and failed variable
+      // I’m setting both the new IDs of the created URLs and the IDs of the exist URLs from the created and exist variable
       const createdIds = created.map((item: any) => item.id);
-      const failedIds = failed.map((item: any) => item.id);
+      const existIds = exist.map((item: any) => item.id);
 
-      // Spread the IDs of both created and failed URLs into a single id array
-      const ids = [...createdIds, ...failedIds];
+      // Save failed urls
+      failedURLs = failed.map((item: any) => item.url);
+
+      // Spread the IDs of both created and exist URLs into a single id array
+      const ids = [...createdIds, ...existIds];
 
       // To update the profile and receive the changes
       fetchProfile();
@@ -731,6 +761,7 @@ const Table: React.FC<TableProps> = ({
           method: "POST",
           data: {
             ids: ids,
+            failedURLs: failedURLs,
           },
           headers: {
             Authorization: `Bearer ${getToken()}`,
@@ -1032,6 +1063,15 @@ const Table: React.FC<TableProps> = ({
                   </th>
                   <th className="py-[6px]">
                     <PopoverSort
+                      label="URL"
+                      field="url"
+                      onSortChange={handleSortChange}
+                      currentSortField={sortField}
+                      currentSortOrder={sortOrder}
+                    />
+                  </th>
+                  <th className="py-[6px]">
+                    <PopoverSort
                       label="HTML Version"
                       field="html_version"
                       onSortChange={handleSortChange}
@@ -1122,6 +1162,21 @@ const Table: React.FC<TableProps> = ({
                       value={statusFilter}
                       onChange={(e) => {
                         setStatusFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                    />
+                  </th>
+                  <th className="px-[12px] py-[6px]">
+                    <Input
+                      placeholder="Filter by URL"
+                      className="h-8 rounded-[4px] font-medium"
+                      style={{
+                        border: "1px solid rgba(0,0,0,0.1)",
+                        backgroundColor: "transparent",
+                      }}
+                      value={URLFilter}
+                      onChange={(e) => {
+                        setURLFilter(e.target.value);
                         setCurrentPage(1);
                       }}
                     />
@@ -1228,17 +1283,14 @@ const Table: React.FC<TableProps> = ({
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left overflow-hidden whitespace-nowrap overflow-ellipsis max-w-[500px]"
                             >
-                              {title}
+                              {title ? title : "No title found"}
                             </a>
                           </td>
                           <td className="px-[12px] py-[6px]">
                             <a
                               onClick={(e) => {
                                 e.stopPropagation();
-                                if (
-                                  status === "running" ||
-                                  (status === "queued" && should_pause)
-                                ) {
+                                if (status !== "done") {
                                   toggleShouldPause(id);
                                 }
                               }}
@@ -1247,7 +1299,7 @@ const Table: React.FC<TableProps> = ({
                               className={`w-full h-full text-left flex items-center gap-3 cursor-pointer
                                   `}
                             >
-                              {should_pause ? (
+                              {should_pause && status !== "error" ? (
                                 <div className="cursor-pointer flex gap-3 items-center">
                                   <div className="flex items-center gap-1 text-xs px-2 py-[2px] bg-yellow-100 text-yellow-700 rounded-full ">
                                     <Pause className="w-3.5 h-3.5" />
@@ -1258,22 +1310,25 @@ const Table: React.FC<TableProps> = ({
                               ) : (
                                 <div
                                   className={`flex gap-3 items-center ${
-                                    (status === "running" ||
-                                      (status === "queued" && should_pause)) &&
-                                    "cursor-pointer"
+                                    status === "done" && "cursor-default"
                                   }`}
                                 >
                                   <StatusBadge status={status} />
                                   <>
-                                    <Pause
-                                      size={16}
-                                      color="#f5a623"
-                                      className={`${
-                                        status !== "queued" && status !== "done"
-                                          ? ""
-                                          : "hidden"
-                                      }`}
-                                    />
+                                    {status === "error" ? (
+                                      <RefreshCcw size={16} color="#008236" />
+                                    ) : (
+                                      <Pause
+                                        size={16}
+                                        color="#f5a623"
+                                        className={`${
+                                          status !== "queued" &&
+                                          status !== "done"
+                                            ? ""
+                                            : "hidden"
+                                        }`}
+                                      />
+                                    )}
                                   </>
                                 </div>
                               )}
@@ -1286,7 +1341,17 @@ const Table: React.FC<TableProps> = ({
                               rel="noopener noreferrer"
                               className="block w-full h-full text-left"
                             >
-                              {html_version}
+                              {url}
+                            </a>
+                          </td>
+                          <td className=" px-[12px] py-[6px]">
+                            <a
+                              href={detailUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="block w-full h-full text-left"
+                            >
+                              {html_version ? html_version : "Unknown"}
                             </a>
                           </td>
                           <td className=" px-[12px] py-[6px]">

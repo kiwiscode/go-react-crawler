@@ -136,7 +136,6 @@ func createAnalyses(c *gin.Context) {
 				"should_pause": false,
 			})
 
-			fmt.Printf("result from analyze url for ErrorURL: %+v\n", result.ErrorURL)
 		}
 
 		if err != nil {
