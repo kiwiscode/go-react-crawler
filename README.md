@@ -11,8 +11,8 @@
     A fullstack web crawler built with Go (Gin), React, and MySQL
     <br />
     <br />
-    <!-- <a href="https://github.com/kiwiscode/go-react-crawler">View Demo</a>
-    &middot; -->
+    <a href="https://go-react-crawler.vercel.app">View Demo</a>
+    &middot;
     <a href="https://github.com/kiwiscode/go-react-crawler/issues/new?labels=bug&template=bug-report--.md">Report Bug</a>
     &middot;
     <a href="https://github.com/kiwiscode/go-react-crawler/issues/new?labels=enhancement&template=feature-request---.md">Request Feature</a>
