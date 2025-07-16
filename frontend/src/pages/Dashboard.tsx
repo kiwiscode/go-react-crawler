@@ -464,8 +464,6 @@ const Dashboard = () => {
   // Receive the selected and deleted URLs from the Table child component, and if those URLs exist in the selectedUrls list, remove them from both selectedUrls and sendUrls
   const getDeletedURLs = (data: string[]) => {
     if (data) {
-      console.log("data received:", data);
-
       setToSendURLs((prev) =>
         prev.filter((url: string) => !data.includes(url))
       );
@@ -478,9 +476,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
-
-  console.log("selected urls:", selectedUrls);
-  console.log("to send urls:", sendURLs);
 
   if (profileLoading)
     return (
