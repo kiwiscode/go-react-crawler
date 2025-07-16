@@ -52,5 +52,5 @@ func main() {
 	routes.AnalyzeRoutes(r)
 
 	// Start the HTTP server on default port 8080
-	r.Run()
+	r.Run(":8080")
 }
