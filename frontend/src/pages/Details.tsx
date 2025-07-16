@@ -74,8 +74,6 @@ const Details: React.FC = () => {
           },
         });
 
-        console.log("response:", res);
-
         const data: UrlData = res.data;
         setAnalysis(data);
 

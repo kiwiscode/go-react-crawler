@@ -646,8 +646,6 @@ const Table: React.FC<TableProps> = ({
 
           // Send the url and status of this last analyzed running URL to the Dashboard as data
           giveTogglePayload({ url, status });
-          console.log("datas child:", url);
-          console.log("datas child:", status);
 
           // To update the profile and receive the changes
           fetchProfile();
@@ -708,7 +706,7 @@ const Table: React.FC<TableProps> = ({
         // To update the profile and receive the changes
         fetchProfile();
 
-        console.log("data after adding to queues:", res.data);
+        "data after adding to queues:", res.data;
       }, 300);
 
       setTimeout(async () => {
@@ -726,8 +724,6 @@ const Table: React.FC<TableProps> = ({
 
         // To update the profile and receive the changes
         fetchProfile();
-
-        console.log("data after adding to running:", res.data);
       }, 1000);
 
       setTimeout(async () => {
@@ -753,8 +749,6 @@ const Table: React.FC<TableProps> = ({
       setSelectAll(false);
     }
   };
-
-  console.log("selected send urls:", sendURLs);
 
   return (
     <>

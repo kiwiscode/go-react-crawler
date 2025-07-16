@@ -108,7 +108,6 @@ const useAxios = () => {
       return res.data;
     } catch (err: any) {
       // Catch errors using the catch block
-      console.log("error:", err);
       if (axios.isCancel(err)) {
         // If the request was aborted, just log it to the console
         console.error("Request cancelled", err.message);

@@ -75,7 +75,6 @@ const Dashboard = () => {
         },
       });
 
-      console.log("profile data:", data);
       setUrls(data.urls);
       setProfile(data.user);
 
@@ -172,8 +171,6 @@ const Dashboard = () => {
       // Spread the elements to a single variable
       const combined = [...created, ...failed];
 
-      console.log("data after url/create request:", res);
-
       // Update the selected URLs displayed in the UI
       setSelectedUrls(combined);
 
@@ -199,8 +196,6 @@ const Dashboard = () => {
         // })
         // Using this data, we keep the status updated during the 'queued → running → done / error' process each time
         setSelectedUrls(res.data);
-
-        console.log("data after adding to queues:", res.data);
       }, 300);
 
       // Run one by one
@@ -225,8 +220,6 @@ const Dashboard = () => {
         // })
         // Using this data, we keep the status updated during the 'queued → running → done / error' process each time
         setSelectedUrls(res.data);
-
-        console.log("data after adding to running:", res.data);
       }, 1000);
 
       // Get the results one by one as done or error
@@ -315,7 +308,6 @@ const Dashboard = () => {
       fetchProfile();
 
       const shouldPause = data.should_pause;
-      console.log("data after toggle:", data);
 
       // If shouldPause is false, then running and done/error statuses can be checked
       if (!shouldPause) {
@@ -340,9 +332,6 @@ const Dashboard = () => {
               urlObj.id === updatedURLId ? res.data[0] : urlObj
             )
           );
-
-          console.log("updated url id:", updatedURLId);
-          console.log("with toggle data after adding to running:", res.data);
 
           // Fetch the active (current) profile
           fetchProfile();
@@ -373,8 +362,6 @@ const Dashboard = () => {
             );
           }
 
-          console.log("with toggle data after url analysis is done:", res.data);
-
           // Fetch the active (current) profile
           fetchProfile();
 
@@ -383,7 +370,6 @@ const Dashboard = () => {
           setAnalyzeLoading(false);
         }, 5000);
       }
-      console.log("data after toggle:", data);
     } catch (error) {
       setAnalyzeLoading(false);
 
@@ -444,7 +430,6 @@ const Dashboard = () => {
     fetchProfile();
   }, []);
 
-  console.log("selected urls:", selectedUrls);
   if (profileLoading)
     return (
       <div className="min-h-dvh w-full flex justify-center items-center">
