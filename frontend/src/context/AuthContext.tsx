@@ -44,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   // Remove token from localStorage, update state, and redirect to homepage
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("showSeed");
 
     setIsAuthenticated(false);
     navigate("/");

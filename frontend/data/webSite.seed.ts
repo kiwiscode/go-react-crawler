@@ -38,4 +38,22 @@ export const seedData: SelectedUrl[] = [
     status: "queued",
     should_pause: false,
   },
+  {
+    id: 6,
+    url: "https://x.com",
+    status: "queued",
+    should_pause: false,
+  },
+  {
+    id: 7,
+    url: "https://x.com/messages",
+    status: "queued",
+    should_pause: false,
+  },
+  {
+    id: 8,
+    url: "https://x.com/home",
+    status: "queued",
+    should_pause: false,
+  },
 ];

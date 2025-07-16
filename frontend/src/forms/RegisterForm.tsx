@@ -54,6 +54,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ authMode }) => {
 
       // If the response status from /register is 200,
       if (data?.status === 200) {
+        // Manually show the initial seed data to the user — this data gives them some ideas for getting started. And store the state that keeps this information in localStorage — no need to put extra load on the database backend
+        localStorage.setItem("showSeed", JSON.stringify(true));
         // save the token to localStorage using setToken from useAuth
         setToken(data.token);
         // after the user registers, save the token immediately and then redirect to the dashboard

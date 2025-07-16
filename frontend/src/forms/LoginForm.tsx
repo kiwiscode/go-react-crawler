@@ -52,9 +52,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ authMode }) => {
 
       // If the response status from /register is 200,
       if (data?.status === 200) {
+        // Manually show the initial seed data to the user — this data gives them some ideas for getting started. And store the state that keeps this information in localStorage — no need to put extra load on the database backend
+        localStorage.setItem("showSeed", JSON.stringify(true));
         // save the token to localStorage using setToken from useAuth
-        setToken(data.token);
         // after the user login, save the token immediately and then redirect to the dashboard
+        setToken(data.token);
         // The dashboard is a protected route, and since the token is saved in localStorage,
         // the token state currently holds a value, allowing access to the protected route
         navigate("/dashboard");
